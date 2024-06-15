@@ -37,7 +37,32 @@ func getComponentValues(components []discordgo.MessageComponent) map[string]stri
 }
 
 func HandleTicket(interaction *discordgo.InteractionCreate) {
-	panic("unimplemented")
+	userId := interaction.Member.User.ID
+
+	channelId := discord.CreatePrivateChannel(discord.PrivateChannelData{
+		ChannelName:   "ticket-1",
+		CategoryID:    config.TicketCategory(),
+		CreatorUserID: userId,
+		Topic:         "Ticket asdasd",
+	})
+
+	modalValues := getComponentValues(interaction.ModalSubmitData().Components)
+	var reportData ModalData
+	for key, value := range modalValues {
+		switch key {
+		case "ticket_title":
+			reportData.Body = value
+		case "ticket_reason":
+			reportData.Title = value
+		}
+	}
+
+	sendMessageToChannel(TicketData{
+		Title:     reportData.Title,
+		Body:      reportData.Body,
+		ChannelId: channelId,
+		UserId:    userId,
+	}, interaction)
 }
 
 type TicketData struct {
@@ -63,9 +88,9 @@ func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCre
 	discord.Session.InteractionRespond(interaction.Interaction, successResponse)
 }
 
-type BugReportData struct {
-	BugReportReason string
-	BugReportTitle  string
+type ModalData struct {
+	Body  string
+	Title string
 }
 
 func HandleBugReport(interaction *discordgo.InteractionCreate) {
@@ -79,27 +104,20 @@ func HandleBugReport(interaction *discordgo.InteractionCreate) {
 	})
 
 	modalValues := getComponentValues(interaction.ModalSubmitData().Components)
-	var reportData BugReportData
+	var reportData ModalData
 	for key, value := range modalValues {
 		switch key {
 		case "bug_report_reason":
-			reportData.BugReportReason = value
+			reportData.Body = value
 		case "bug_report_title":
-			reportData.BugReportTitle = value
+			reportData.Title = value
 		}
 	}
 
-	message := fmt.Sprintf("<@%s> - %s\n\n__**%s**__\n\n*%s*", userId, "hex", reportData.BugReportTitle, reportData.BugReportReason)
-	openingMessage := discord.SendChannelMessage(channelId, message)
-
-	discord.Session.ChannelMessagePin(channelId, openingMessage.ID)
-
-	successResponse := &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "Ticket created successfully!",
-		},
-	}
-
-	discord.Session.InteractionRespond(interaction.Interaction, successResponse)
+	sendMessageToChannel(TicketData{
+		Title:     reportData.Title,
+		Body:      reportData.Body,
+		ChannelId: channelId,
+		UserId:    userId,
+	}, interaction)
 }

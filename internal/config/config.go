@@ -76,6 +76,11 @@ func TicketArchiveChannel() string {
 	return config.ticketArchiveChannel
 }
 
+func TicketCategory() string {
+	return config.TicketCategory
+
+}
+
 func BugOpenChannel() string {
 	return config.bugOpenChannel
 }
