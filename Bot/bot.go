@@ -12,6 +12,10 @@ import (
 var BotToken string
 var ServerGuildID string
 
+var adminRoles = []string{
+	"906623816627806208", "906475790655434783",
+}
+
 func checkNilErr(e error) {
 	if e != nil {
 		log.Fatal("Error message")
@@ -22,7 +26,6 @@ func Run() {
 	discord, err := discordgo.New("Bot " + BotToken)
 	checkNilErr(err)
 
-	// add a event handler
 	// discord.AddHandler(newMessage)
 	discord.AddHandler(newInteraction)
 
@@ -154,6 +157,70 @@ func getGuildChannelsFromCategoryId(discord *discordgo.Session, categoryID strin
 	return categoryChannels
 }
 
+func doCreateNewPrivateChannelToCategory(discord *discordgo.Session, categoryID string, channelName string, interaction *discordgo.InteractionCreate) {
+
+	permissionOverwrites := []*discordgo.PermissionOverwrite{
+		{
+			ID:    interaction.Member.User.ID,
+			Type:  discordgo.PermissionOverwriteTypeMember,
+			Allow: discordgo.PermissionViewChannel | discordgo.PermissionSendMessages | discordgo.PermissionReadMessageHistory | discordgo.PermissionAttachFiles | discordgo.PermissionAddReactions,
+		},
+		{
+			Deny: discordgo.PermissionViewChannel,
+			ID:   ServerGuildID,
+		},
+	}
+
+	for _, roleID := range adminRoles {
+		permissionOverwrites = append(permissionOverwrites, &discordgo.PermissionOverwrite{
+			ID:    roleID,
+			Allow: discordgo.PermissionViewChannel,
+		})
+	}
+
+	createdChannel, err := discord.GuildChannelCreateComplex(ServerGuildID, discordgo.GuildChannelCreateData{
+		Name:                 channelName,
+		Type:                 discordgo.ChannelTypeGuildText,
+		ParentID:             categoryID,
+		Topic:                "Private channel for communication with the server staff.",
+		PermissionOverwrites: permissionOverwrites,
+	})
+	checkNilErr(err)
+
+	doSendMessageToPrivateChannelAfterCreation(discord, createdChannel.ID, interaction)
+}
+
+func doSendMessageToPrivateChannelAfterCreation(discord *discordgo.Session, channelID string, interaction *discordgo.InteractionCreate) {
+	/* ticketTitle := interaction.MessageComponentData().Values[0]
+	ticketReason := interaction.MessageComponentData().Values[1] */
+
+	components := interaction.ModalSubmitData().Components
+	var ticketTitle, ticketReason string
+
+	for _, component := range components {
+		fmt.Println(component)
+	}
+
+	fmt.Println(components)
+	fmt.Println(ticketTitle, ticketReason)
+
+	openingMessage, err := discord.ChannelMessageSend(channelID, fmt.Sprintf("<@%s> - %s\n\n__**%s**__\n\n*%s*", interaction.Member.User.ID, "hex", ticketTitle, ticketReason))
+	checkNilErr(err)
+
+	err = discord.ChannelMessagePin(channelID, openingMessage.ID)
+	checkNilErr(err)
+
+	successResponse := &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Ticket created successfully!",
+		},
+	}
+
+	err = discord.InteractionRespond(interaction.Interaction, successResponse)
+	checkNilErr(err)
+}
+
 /* func newMessage(discord *discordgo.Session, message *discordgo.MessageCreate) {
 	if message.GuildID != ServerGuildID {
 		return
@@ -198,6 +265,8 @@ func newInteraction(discord *discordgo.Session, interaction *discordgo.Interacti
 		modalData := interaction.ModalSubmitData()
 		fmt.Printf("Modal Submit Interaction: customId = %s, components = %v\n", modalData.CustomID, modalData.Components)
 
+		doCreateNewPrivateChannelToCategory(discord, "906482313624444988", "testi-ticket", interaction)
+
 		// Process the submitted data
 		// processModalSubmission(discord, interaction, modalData)
 	default:
@@ -217,7 +286,7 @@ func openInteractionModal(discord *discordgo.Session, interaction *discordgo.Int
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						&discordgo.TextInput{
-							CustomID:    "ticket-title",
+							CustomID:    "ticket_title",
 							Label:       "Tiketin aihe",
 							Style:       discordgo.TextInputShort,
 							Placeholder: "esim. Hahmon poisto",
@@ -230,7 +299,7 @@ func openInteractionModal(discord *discordgo.Session, interaction *discordgo.Int
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						&discordgo.TextInput{
-							CustomID:    "ticket-reason",
+							CustomID:    "ticket_reason",
 							Label:       "Tiketin syy",
 							Style:       discordgo.TextInputParagraph,
 							Placeholder: "esim. Haluan poistaa hahmoni x, koska en pelaa sillä enää.",
