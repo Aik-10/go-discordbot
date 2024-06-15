@@ -9,3 +9,7 @@ server guild = 905199178014142494
 1251473055318806559 - archive
 
 assigned items download and upload to other
+
+
+
+pprp backend, make possible to query discord user information, need to be authented

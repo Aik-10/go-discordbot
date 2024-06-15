@@ -12,10 +12,6 @@ import (
 var BotToken string
 var ServerGuildID string
 
-var adminRoles = []string{
-	"906623816627806208", "906475790655434783",
-}
-
 func checkNilErr(e error) {
 	if e != nil {
 		log.Fatal("Error message")
@@ -191,9 +187,6 @@ func doCreateNewPrivateChannelToCategory(discord *discordgo.Session, categoryID 
 }
 
 func doSendMessageToPrivateChannelAfterCreation(discord *discordgo.Session, channelID string, interaction *discordgo.InteractionCreate) {
-	/* ticketTitle := interaction.MessageComponentData().Values[0]
-	ticketReason := interaction.MessageComponentData().Values[1] */
-
 	components := interaction.ModalSubmitData().Components
 	var ticketTitle, ticketReason string
 

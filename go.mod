@@ -1,4 +1,4 @@
-module lentokone/ticketbot
+module github.com/Aik-10/go-discordbot
 
 go 1.21.5
 
