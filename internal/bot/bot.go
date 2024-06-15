@@ -22,13 +22,14 @@ func Start() {
 	defer discord.Session.Close()
 
 	fmt.Println("Bot is running. Press Ctrl + C to exit.")
+
+	handlers.ReadyHandler(discord.Session)
+
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 }
 
 func addHandlers() {
-	discord.Session.AddHandler(handlers.ReadyHandler)
 	discord.Session.AddHandler(handlers.InteractionHandler)
-	// Session.AddHandler(handlers.GuildCreateHandler)
 }

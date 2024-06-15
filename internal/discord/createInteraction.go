@@ -3,25 +3,25 @@ package discord
 import "github.com/bwmarrin/discordgo"
 
 type ButtonInteraction struct {
-	InteractionLabel    string
-	InteractionStyle    discordgo.ButtonStyle
-	InteractionCustomID string
-	InteractionEmoji    string
-	Title               string
-	Description         string
-	Color               int
+	Label       string
+	Style       discordgo.ButtonStyle
+	CustomID    string
+	Emoji       string
+	Title       string
+	Description string
+	Color       int
 }
 
 func CreateInteractionEmbed(data ButtonInteraction) *discordgo.MessageSend {
-	Components := []discordgo.MessageComponent{
-		&discordgo.ActionsRow{
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				&discordgo.Button{
-					Label:    data.InteractionLabel,
-					Style:    data.InteractionStyle,
-					CustomID: data.InteractionCustomID,
+					Label:    data.Label,
+					Style:    data.Style,
+					CustomID: data.CustomID,
 					Emoji: &discordgo.ComponentEmoji{
-						Name: data.InteractionEmoji,
+						Name: data.Emoji,
 					},
 				},
 			},
@@ -31,14 +31,12 @@ func CreateInteractionEmbed(data ButtonInteraction) *discordgo.MessageSend {
 	embed := &discordgo.MessageEmbed{
 		Title:       data.Title,
 		Description: data.Description,
+		Color:       data.Color,
 	}
-
-	embed.Color = data.Color
 
 	return &discordgo.MessageSend{
 		Content:    "",
 		Embed:      embed,
-		Components: Components,
+		Components: components,
 	}
-
 }

@@ -79,3 +79,11 @@ func TicketArchiveChannel() string {
 func BugOpenChannel() string {
 	return config.bugOpenChannel
 }
+
+func BugArchiveChannel() string {
+	return config.bugArchiveChannel
+}
+
+func BugReportCategoryID() string {
+	return config.BugCategoryId
+}

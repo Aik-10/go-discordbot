@@ -8,8 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func ReadyHandler(s *discordgo.Session, event *discordgo.Ready) {
-	// Set the playing status.
+func ReadyHandler(s *discordgo.Session) {
 	err := s.UpdateGameStatus(1, config.BotStatus())
 	if err != nil {
 		slog.Warn("failed to update game status", "error", err)
@@ -20,23 +19,23 @@ func ReadyHandler(s *discordgo.Session, event *discordgo.Ready) {
 	discord.DeleteBotMessagesInChannel(config.BugOpenChannel())
 
 	ticketEmbed := discord.CreateInteractionEmbed(discord.ButtonInteraction{
-		InteractionLabel:    "Open Ticket!",
-		InteractionStyle:    discordgo.PrimaryButton,
-		InteractionCustomID: "open_ticket",
-		InteractionEmoji:    "📩",
-		Title:               "New Ticket",
-		Description:         "Open a new ticket",
-		Color:               0x00ff00,
+		Label:       "Open Ticket!",
+		Style:       discordgo.PrimaryButton,
+		CustomID:    "open_ticket",
+		Emoji:       "📩",
+		Title:       "New Ticket",
+		Description: "Open a new ticket",
+		Color:       0x00ff00,
 	})
 
 	bugEmbed := discord.CreateInteractionEmbed(discord.ButtonInteraction{
-		InteractionLabel:    "Open Bug!",
-		InteractionStyle:    discordgo.PrimaryButton,
-		InteractionCustomID: "open_bug",
-		InteractionEmoji:    "📩",
-		Title:               "Bug raport",
-		Description:         "Open a new bug raport",
-		Color:               0x00ff00,
+		Label:       "Open Bug!",
+		Style:       discordgo.PrimaryButton,
+		CustomID:    "open_bug",
+		Emoji:       "📩",
+		Title:       "Bug raport",
+		Description: "Open a new bug raport",
+		Color:       0x00ff00,
 	})
 
 	discord.SendChannelMessageSendComplex(config.TicketOpenChannel(), ticketEmbed)
@@ -55,6 +54,7 @@ func InteractionHandler(session *discordgo.Session, interaction *discordgo.Inter
 		componentData := interaction.MessageComponentData()
 		slog.Info("Component Interaction", "customId", componentData.CustomID, "values", componentData.Values)
 
+		MessageInteractionHandler(componentData.CustomID, interaction)
 		// openInteractionModal(discord, interaction, componentData)
 	case discordgo.InteractionApplicationCommand:
 		commandData := interaction.ApplicationCommandData()
@@ -63,11 +63,10 @@ func InteractionHandler(session *discordgo.Session, interaction *discordgo.Inter
 		// Interaction with a modal submission
 		modalData := interaction.ModalSubmitData()
 		slog.Info("Modal Submit Interaction", "customId", modalData.CustomID, "components", modalData.Components)
-
+		HandleModalSubmitData(modalData.CustomID, interaction)
 		// doCreateNewPrivateChannelToCategory(discord, "906482313624444988", "testi-ticket", interaction)
 
 	default:
 		slog.Error("Unknown interaction type")
 	}
-
 }
