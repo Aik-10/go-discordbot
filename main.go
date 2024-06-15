@@ -19,5 +19,6 @@ func goDotEnvVariable(key string) string {
 
 func main() {
 	bot.BotToken = goDotEnvVariable("DISCORD_TOKEN")
+	bot.ServerGuildID = goDotEnvVariable("SERVER_GUILDID")
 	bot.Run()
 }
