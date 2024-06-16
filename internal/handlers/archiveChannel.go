@@ -68,7 +68,13 @@ func SendChannelFileToArchive(channelID string, archiveChannelID string, content
 	}
 	defer file.Close()
 
-	discord.Session.ChannelFileSendWithMessage(archiveChannelID, content, "archive.txt", file)
+	message, err := discord.Session.ChannelFileSendWithMessage(archiveChannelID, content, "archive.txt", file)
+	if err != nil {
+		slog.Error("Failed to send file", "error", err)
+		return
+	}
+
+	slog.Info("File has been sent to archive channel", "messageId", message.ID)
 
 	err = file.Close()
 	if err != nil {
