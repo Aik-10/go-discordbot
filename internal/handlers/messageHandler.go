@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"log/slog"
-
 	"github.com/Aik-10/go-discordbot/internal/config"
 	"github.com/Aik-10/go-discordbot/internal/discord"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -17,21 +16,21 @@ func MessageInteractionHandler(CustomID string, interaction *discordgo.Interacti
 	case "close_channel":
 		CloseChannelButton(interaction)
 	default:
-		slog.Error("Unknown interaction type", "CustomID", CustomID)
+		utils.Logger.Error("Unknown interaction type", "CustomID", CustomID)
 	}
 }
 
 func getParentCategoryByChannelID(channelID string) (*discordgo.Channel, error) {
 	channel, err := discord.Session.Channel(channelID)
 	if err != nil {
-		slog.Error("Failed to get channel", "error", err)
+		utils.Logger.Error("Failed to get channel", "error", err)
 		return nil, err
 	}
 
 	if channel.ParentID != "" {
 		parentCategory, err := discord.Session.Channel(channel.ParentID)
 		if err != nil {
-			slog.Error("Failed to get parent category", "error", err)
+			utils.Logger.Error("Failed to get parent category", "error", err)
 			return nil, err
 		}
 
@@ -44,7 +43,7 @@ func getParentCategoryByChannelID(channelID string) (*discordgo.Channel, error) 
 func CloseChannelButton(interaction *discordgo.InteractionCreate) {
 	category, err := getParentCategoryByChannelID(interaction.ChannelID)
 	if category == nil || err != nil {
-		slog.Error("Failed to get parent category")
+		utils.Logger.Error("Failed to get parent category")
 		return
 	}
 
@@ -56,7 +55,7 @@ func CloseChannelButton(interaction *discordgo.InteractionCreate) {
 		HandleChannelArchive(interaction.ChannelID, config.BugArchiveChannel())
 		HandleChannelDeletion(interaction.ChannelID)
 	default:
-		slog.Error("Unknown category", "category", category.ID)
+		utils.Logger.Error("Unknown category", "category", category.ID)
 	}
 }
 
@@ -88,7 +87,7 @@ func ButtonInteractHandleBug(interaction *discordgo.InteractionCreate) {
 
 	err := discord.Session.InteractionRespond(interaction.Interaction, modal)
 	if err != nil {
-		slog.Error("Failed to respond to interaction", "error", err)
+		utils.Logger.Error("Failed to respond to interaction", "error", err)
 	}
 }
 
@@ -120,6 +119,6 @@ func ButtonInteractHandleTicket(interaction *discordgo.InteractionCreate) {
 
 	err := discord.Session.InteractionRespond(interaction.Interaction, modal)
 	if err != nil {
-		slog.Error("Failed to respond to interaction", "error", err)
+		utils.Logger.Error("Failed to respond to interaction", "error", err)
 	}
 }

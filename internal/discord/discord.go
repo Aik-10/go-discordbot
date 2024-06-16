@@ -1,9 +1,9 @@
 package discord
 
 import (
-	"log/slog"
 	"os"
 
+	"github.com/Aik-10/go-discordbot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -30,7 +30,7 @@ func SearchVoiceChannelByUserID(userID string) (voiceChannelID string) {
 func SendChannelMessage(channelID string, message string) (*discordgo.Message, error) {
 	openingMessage, err := Session.ChannelMessageSend(channelID, message)
 	if err != nil {
-		slog.Warn("failed to send message to channel", "channelId", channelID, "message", message, "error", err)
+		utils.Logger.Warn("failed to send message to channel", "channelId", channelID, "message", message, "error", err)
 		return nil, err
 	}
 
@@ -40,27 +40,27 @@ func SendChannelMessage(channelID string, message string) (*discordgo.Message, e
 func SendChannelMessageSendComplex(channelID string, data *discordgo.MessageSend) {
 	_, err := Session.ChannelMessageSendComplex(channelID, data)
 	if err != nil {
-		slog.Warn("failed to send message to channel", "channelId", channelID, "error", err)
+		utils.Logger.Warn("failed to send message to channel", "channelId", channelID, "error", err)
 	}
 }
 
 func SendChannelFile(channelID string, filepath string, filename string) {
 	reader, err := os.Open(filepath)
 	if err != nil {
-		slog.Warn("failed to open file", "filepath", filepath, "error", err)
+		utils.Logger.Warn("failed to open file", "filepath", filepath, "error", err)
 		return
 	}
 
 	_, err = Session.ChannelFileSend(channelID, filename, reader)
 	if err != nil {
-		slog.Warn("failed to send file to channel", "channelId", channelID, "filepath", filepath, "error", err)
+		utils.Logger.Warn("failed to send file to channel", "channelId", channelID, "filepath", filepath, "error", err)
 	}
 }
 
 func JoinVoiceChannel(guildID string, voiceChannelID string, mute bool, deafen bool) (*discordgo.VoiceConnection, error) {
 	voiceConnection, err := Session.ChannelVoiceJoin(guildID, voiceChannelID, mute, deafen)
 	if err != nil {
-		slog.Warn("failed to join voice channel", "error", err)
+		utils.Logger.Warn("failed to join voice channel", "error", err)
 	}
 
 	return voiceConnection, err
@@ -69,17 +69,17 @@ func JoinVoiceChannel(guildID string, voiceChannelID string, mute bool, deafen b
 func DeleteBotMessagesInChannel(channelID string) {
 	messages, err := Session.ChannelMessages(channelID, 100, "", "", "")
 	if err != nil {
-		slog.Warn("failed to get messages from channel", "channelId", channelID, "error", err)
+		utils.Logger.Warn("failed to get messages from channel", "channelId", channelID, "error", err)
 	}
 
 	for _, message := range messages {
 		if (message.Author.ID == Session.State.User.ID) || (message.Author.Bot) {
 			err = Session.ChannelMessageDelete(channelID, message.ID)
 			if err != nil {
-				slog.Warn("failed to delete message", "messageId", message.ID, "channelId", channelID, "error", err)
+				utils.Logger.Warn("failed to delete message", "messageId", message.ID, "channelId", channelID, "error", err)
 			}
 
-			slog.Info("deleted message", "messageId", message.ID, "channelId", channelID)
+			utils.Logger.Info("deleted message", "messageId", message.ID, "channelId", channelID)
 		}
 	}
 }

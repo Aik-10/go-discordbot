@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"log/slog"
 
 	"github.com/Aik-10/go-discordbot/internal/config"
 	"github.com/Aik-10/go-discordbot/internal/discord"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -17,7 +17,7 @@ func HandleModalSubmitData(CustomID string, interaction *discordgo.InteractionCr
 	case "ticket_modal":
 		handleTicket(interaction)
 	default:
-		slog.Error("Unknown modal type")
+		utils.Logger.Error("Unknown modal type")
 	}
 }
 
@@ -54,7 +54,7 @@ func handleInteraction(interaction *discordgo.InteractionCreate, channelName, ca
 		Topic:         channelName + " channel",
 	})
 	if err != nil {
-		slog.Error("Failed to create channel", "error", err)
+		utils.Logger.Error("Failed to create channel", "error", err)
 		respondWithError(interaction, "Failed to create channel. Please try again later.")
 		return
 	}
@@ -80,14 +80,14 @@ func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCre
 	message := fmt.Sprintf("<@%s> - %s\n\n__**%s**__\n\n*%s*", data.UserId, "hex", data.Title, data.Body)
 	openingMessage, err := discord.SendChannelMessage(data.ChannelId, message)
 	if err != nil {
-		slog.Error("Failed to send channel message", "error", err)
+		utils.Logger.Error("Failed to send channel message", "error", err)
 		respondWithError(interaction, "Failed to send message to channel. Please try again later.")
 		return
 	}
 
 	err = discord.Session.ChannelMessagePin(data.ChannelId, openingMessage.ID)
 	if err != nil {
-		slog.Error("Failed to pin message", "error", err)
+		utils.Logger.Error("Failed to pin message", "error", err)
 		respondWithError(interaction, "Failed to pin message in channel. Please try again later.")
 		return
 	}
@@ -101,7 +101,7 @@ func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCre
 
 	err = discord.Session.InteractionRespond(interaction.Interaction, successResponse)
 	if err != nil {
-		slog.Error("Failed to send interaction response", "error", err)
+		utils.Logger.Error("Failed to send interaction response", "error", err)
 	}
 }
 
@@ -115,7 +115,7 @@ func respondWithError(interaction *discordgo.InteractionCreate, message string) 
 	}
 	err := discord.Session.InteractionRespond(interaction.Interaction, errorResponse)
 	if err != nil {
-		slog.Error("Failed to send error interaction response", "error", err)
+		utils.Logger.Error("Failed to send error interaction response", "error", err)
 	}
 }
 

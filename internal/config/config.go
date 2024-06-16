@@ -52,6 +52,11 @@ func Load() {
 	}
 }
 
+func GetSentryDNS() string {
+	return goDotEnvVariable("SENTRY_DSN")
+
+}
+
 func BotToken() string {
 	return config.BotToken
 }

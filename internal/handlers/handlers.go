@@ -1,17 +1,16 @@
 package handlers
 
 import (
-	"log/slog"
-
 	"github.com/Aik-10/go-discordbot/internal/config"
 	"github.com/Aik-10/go-discordbot/internal/discord"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
 func ReadyHandler(s *discordgo.Session) {
 	err := s.UpdateGameStatus(1, config.BotStatus())
 	if err != nil {
-		slog.Warn("failed to update game status", "error", err)
+		utils.Logger.Warn("failed to update game status", "error", err)
 	}
 
 	/* after client is ready clear channels */
@@ -47,26 +46,26 @@ func InteractionHandler(session *discordgo.Session, interaction *discordgo.Inter
 		return
 	}
 
-	slog.Info("Interaction detected", "interaction", interaction, "userId", interaction.Member.User.ID, "username", interaction.Member.User.Username)
+	utils.Logger.Info("Interaction detected", "interaction", interaction, "userId", interaction.Member.User.ID, "username", interaction.Member.User.Username)
 
 	switch interaction.Type {
 	case discordgo.InteractionMessageComponent:
 		componentData := interaction.MessageComponentData()
-		slog.Info("Component Interaction", "customId", componentData.CustomID, "values", componentData.Values)
+		utils.Logger.Info("Component Interaction", "customId", componentData.CustomID, "values", componentData.Values)
 
 		MessageInteractionHandler(componentData.CustomID, interaction)
 		// openInteractionModal(discord, interaction, componentData)
 	case discordgo.InteractionApplicationCommand:
 		commandData := interaction.ApplicationCommandData()
-		slog.Info("Application Command Interaction", "commandName", commandData.Name, "options", commandData.Options)
+		utils.Logger.Info("Application Command Interaction", "commandName", commandData.Name, "options", commandData.Options)
 	case discordgo.InteractionModalSubmit:
 		// Interaction with a modal submission
 		modalData := interaction.ModalSubmitData()
-		slog.Info("Modal Submit Interaction", "customId", modalData.CustomID, "components", modalData.Components)
+		utils.Logger.Info("Modal Submit Interaction", "customId", modalData.CustomID, "components", modalData.Components)
 		HandleModalSubmitData(modalData.CustomID, interaction)
 		// doCreateNewPrivateChannelToCategory(discord, "906482313624444988", "testi-ticket", interaction)
 
 	default:
-		slog.Error("Unknown interaction type")
+		utils.Logger.Error("Unknown interaction type")
 	}
 }

@@ -1,9 +1,8 @@
 package discord
 
 import (
-	"log/slog"
-
 	"github.com/Aik-10/go-discordbot/internal/config"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -14,7 +13,7 @@ func InitSession() {
 	var err error
 	Session, err = discordgo.New("Bot " + config.BotToken()) // Initializing discord session
 	if err != nil {
-		slog.Error("failed to create discord session", "error", err)
+		utils.Logger.Error("failed to create discord session", "error", err)
 	}
 
 	Session.Identify.Intents = discordgo.IntentsAll
@@ -22,7 +21,7 @@ func InitSession() {
 
 func InitConnection() {
 	if err := Session.Open(); err != nil { // Creating a connection
-		slog.Error("failed to create websocket connection to discord", "error", err)
+		utils.Logger.Error("failed to create websocket connection to discord", "error", err)
 		return
 	}
 }

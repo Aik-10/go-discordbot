@@ -1,9 +1,8 @@
 package discord
 
 import (
-	"log/slog"
-
 	"github.com/Aik-10/go-discordbot/internal/config"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -48,7 +47,7 @@ func CreatePrivateChannel(data PrivateChannelData) (string, error) {
 
 	createdChannel, err := Session.GuildChannelCreateComplex(guildID, channelData)
 	if err != nil {
-		slog.Error("Failed to create channel", "error", err)
+		utils.Logger.Error("Failed to create channel", "error", err)
 		return "", err
 	}
 

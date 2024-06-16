@@ -2,22 +2,22 @@ package handlers
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"time"
 
 	"github.com/Aik-10/go-discordbot/internal/discord"
+	"github.com/Aik-10/go-discordbot/internal/utils"
 )
 
 func HandleChannelArchive(channelID string, archiveChannelID string) {
 	messages, err := discord.Session.ChannelMessages(channelID, 100, "", "", "")
 	if err != nil {
-		slog.Error("Failed to get messages", "error", err)
+		utils.Logger.Error("Failed to get messages", "error", err)
 	}
 
 	file, err := os.Create("tmp/" + channelID + ".txt")
 	if err != nil {
-		slog.Error("Failed to create file", "error", err)
+		utils.Logger.Error("Failed to create file", "error", err)
 		return
 	}
 	defer file.Close()
@@ -34,27 +34,27 @@ func HandleChannelArchive(channelID string, archiveChannelID string) {
 			logMessage = fmt.Sprintf("%s\n", message.Content)
 		}
 
-		slog.Info(logMessage)
+		utils.Logger.Info(logMessage)
 
 		if _, err := file.WriteString(logMessage); err != nil {
-			slog.Error("Failed to write message to file", "error", err)
+			utils.Logger.Error("Failed to write message to file", "error", err)
 			return
 		}
 	}
 
 	channel, err := discord.Session.Channel(channelID)
 	if err != nil {
-		slog.Error("Failed to get channel information", "error", err)
+		utils.Logger.Error("Failed to get channel information", "error", err)
 		return
 	}
 
 	channelInfo := fmt.Sprintf("\n\nChannel: %s\nClosed at: %s\n", channel.Name, time.Now().UTC())
 	if _, err := file.WriteString(channelInfo); err != nil {
-		slog.Error("Failed to write message to file", "error", err)
+		utils.Logger.Error("Failed to write message to file", "error", err)
 		return
 	}
 
-	slog.Info("All messages have been archived to file.")
+	utils.Logger.Info("All messages have been archived to file.")
 
 	archiveMessageContent := fmt.Sprintf("<@%s> - %s", "228494142236393472", archiveChannelID)
 	SendChannelFileToArchive(channelID, archiveChannelID, archiveMessageContent)
@@ -63,22 +63,22 @@ func HandleChannelArchive(channelID string, archiveChannelID string) {
 func SendChannelFileToArchive(channelID string, archiveChannelID string, content string) {
 	file, err := os.Open("tmp/" + channelID + ".txt")
 	if err != nil {
-		slog.Error("Failed to open file", "error", err)
+		utils.Logger.Error("Failed to open file", "error", err)
 		return
 	}
 	defer file.Close()
 
 	message, err := discord.Session.ChannelFileSendWithMessage(archiveChannelID, content, "archive.txt", file)
 	if err != nil {
-		slog.Error("Failed to send file", "error", err)
+		utils.Logger.Error("Failed to send file", "error", err)
 		return
 	}
 
-	slog.Info("File has been sent to archive channel", "messageId", message.ID)
+	utils.Logger.Info("File has been sent to archive channel", "messageId", message.ID)
 
 	err = file.Close()
 	if err != nil {
-		slog.Error("Failed to close file", "error", err)
+		utils.Logger.Error("Failed to close file", "error", err)
 		return
 	}
 }
@@ -86,14 +86,14 @@ func SendChannelFileToArchive(channelID string, archiveChannelID string, content
 func HandleChannelDeletion(channelID string) {
 	body, err := discord.Session.ChannelDelete(channelID)
 	if err != nil {
-		slog.Error("Failed to delete channel", "error", err)
+		utils.Logger.Error("Failed to delete channel", "error", err)
 		return
 	}
 
-	slog.Info("Channel has been deleted", "name", body.Name)
+	utils.Logger.Info("Channel has been deleted", "name", body.Name)
 
 	err = os.Remove("tmp/" + channelID + ".txt")
 	if err != nil {
-		slog.Error("Failed to delete file", "error", err)
+		utils.Logger.Error("Failed to delete file", "error", err)
 	}
 }
