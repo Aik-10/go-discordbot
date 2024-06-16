@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// PrivateChannelData holds data for creating a private channel
 type PrivateChannelData struct {
 	ChannelName   string
 	CategoryID    string
@@ -14,8 +15,9 @@ type PrivateChannelData struct {
 	Topic         string
 }
 
-func CreatePrivateChannel(data PrivateChannelData) string {
-	guildId := config.ServerGuildID()
+// CreatePrivateChannel creates a new private channel with specified permissions
+func CreatePrivateChannel(data PrivateChannelData) (string, error) {
+	guildID := config.ServerGuildID()
 
 	permissionOverwrites := []*discordgo.PermissionOverwrite{
 		{
@@ -24,29 +26,31 @@ func CreatePrivateChannel(data PrivateChannelData) string {
 			Allow: discordgo.PermissionViewChannel | discordgo.PermissionSendMessages | discordgo.PermissionReadMessageHistory | discordgo.PermissionAttachFiles | discordgo.PermissionAddReactions,
 		},
 		{
+			ID:   guildID,
 			Deny: discordgo.PermissionViewChannel,
-			ID:   guildId,
 		},
 	}
 
-	// for _, roleID := range config.GetManagerRoleIDs() {
-	// 	permissionOverwrites = append(permissionOverwrites, &discordgo.PermissionOverwrite{
-	// 		ID:    roleID,
-	// 		Allow: discordgo.PermissionViewChannel,
-	// 	})
-	// }
+	for _, roleID := range config.GetManagerRoleIDs() {
+		permissionOverwrites = append(permissionOverwrites, &discordgo.PermissionOverwrite{
+			ID:    roleID,
+			Allow: discordgo.PermissionViewChannel,
+		})
+	}
 
-	createdChannel, err := Session.GuildChannelCreateComplex(guildId, discordgo.GuildChannelCreateData{
+	channelData := discordgo.GuildChannelCreateData{
 		Name:                 data.ChannelName,
 		Type:                 discordgo.ChannelTypeGuildText,
 		ParentID:             data.CategoryID,
 		Topic:                data.Topic,
 		PermissionOverwrites: permissionOverwrites,
-	})
-
-	if err != nil {
-		slog.Error("Failed to create channel", "error", err)
 	}
 
-	return createdChannel.ID
+	createdChannel, err := Session.GuildChannelCreateComplex(guildID, channelData)
+	if err != nil {
+		slog.Error("Failed to create channel", "error", err)
+		return "", err
+	}
+
+	return createdChannel.ID, nil
 }

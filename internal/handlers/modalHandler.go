@@ -9,20 +9,21 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// HandleModalSubmitData routes the modal submission based on CustomID
 func HandleModalSubmitData(CustomID string, interaction *discordgo.InteractionCreate) {
 	switch CustomID {
 	case "bug_report":
-		HandleBugReport(interaction)
+		handleBugReport(interaction)
 	case "ticket_modal":
-		HandleTicket(interaction)
+		handleTicket(interaction)
 	default:
 		slog.Error("Unknown modal type")
 	}
 }
 
+// getComponentValues extracts values from modal components
 func getComponentValues(components []discordgo.MessageComponent) map[string]string {
 	values := make(map[string]string)
-
 	for _, comp := range components {
 		if row, ok := comp.(*discordgo.ActionsRow); ok {
 			for _, component := range row.Components {
@@ -32,29 +33,36 @@ func getComponentValues(components []discordgo.MessageComponent) map[string]stri
 			}
 		}
 	}
-
 	return values
 }
 
-func HandleTicket(interaction *discordgo.InteractionCreate) {
+func handleTicket(interaction *discordgo.InteractionCreate) {
+	handleInteraction(interaction, "ticket-1", config.TicketCategory(), "ticket_title", "ticket_reason")
+}
+
+func handleBugReport(interaction *discordgo.InteractionCreate) {
+	handleInteraction(interaction, "bug-report", config.BugReportCategoryID(), "bug_report_title", "bug_report_reason")
+}
+
+func handleInteraction(interaction *discordgo.InteractionCreate, channelName, categoryID, titleKey, bodyKey string) {
 	userId := interaction.Member.User.ID
 
-	channelId := discord.CreatePrivateChannel(discord.PrivateChannelData{
-		ChannelName:   "ticket-1",
-		CategoryID:    config.TicketCategory(),
+	channelId, err := discord.CreatePrivateChannel(discord.PrivateChannelData{
+		ChannelName:   channelName,
+		CategoryID:    categoryID,
 		CreatorUserID: userId,
-		Topic:         "Ticket asdasd",
+		Topic:         channelName + " channel",
 	})
+	if err != nil {
+		slog.Error("Failed to create channel", "error", err)
+		respondWithError(interaction, "Failed to create channel. Please try again later.")
+		return
+	}
 
 	modalValues := getComponentValues(interaction.ModalSubmitData().Components)
-	var reportData ModalData
-	for key, value := range modalValues {
-		switch key {
-		case "ticket_title":
-			reportData.Body = value
-		case "ticket_reason":
-			reportData.Title = value
-		}
+	reportData := ModalData{
+		Title: modalValues[titleKey],
+		Body:  modalValues[bodyKey],
 	}
 
 	sendMessageToChannel(TicketData{
@@ -65,18 +73,21 @@ func HandleTicket(interaction *discordgo.InteractionCreate) {
 	}, interaction)
 }
 
-type TicketData struct {
-	Title     string
-	Body      string
-	ChannelId string
-	UserId    string
-}
-
 func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCreate) {
 	message := fmt.Sprintf("<@%s> - %s\n\n__**%s**__\n\n*%s*", data.UserId, "hex", data.Title, data.Body)
-	openingMessage := discord.SendChannelMessage(data.ChannelId, message)
+	openingMessage, err := discord.SendChannelMessage(data.ChannelId, message)
+	if err != nil {
+		slog.Error("Failed to send channel message", "error", err)
+		respondWithError(interaction, "Failed to send message to channel. Please try again later.")
+		return
+	}
 
-	discord.Session.ChannelMessagePin(data.ChannelId, openingMessage.ID)
+	err = discord.Session.ChannelMessagePin(data.ChannelId, openingMessage.ID)
+	if err != nil {
+		slog.Error("Failed to pin message", "error", err)
+		respondWithError(interaction, "Failed to pin message in channel. Please try again later.")
+		return
+	}
 
 	successResponse := &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -85,39 +96,36 @@ func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCre
 		},
 	}
 
-	discord.Session.InteractionRespond(interaction.Interaction, successResponse)
+	err = discord.Session.InteractionRespond(interaction.Interaction, successResponse)
+	if err != nil {
+		slog.Error("Failed to send interaction response", "error", err)
+	}
 }
 
+// respondWithError sends an error message as an interaction response
+func respondWithError(interaction *discordgo.InteractionCreate, message string) {
+	errorResponse := &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: message,
+		},
+	}
+	err := discord.Session.InteractionRespond(interaction.Interaction, errorResponse)
+	if err != nil {
+		slog.Error("Failed to send error interaction response", "error", err)
+	}
+}
+
+// ModalData holds data from modal submissions
 type ModalData struct {
 	Body  string
 	Title string
 }
 
-func HandleBugReport(interaction *discordgo.InteractionCreate) {
-	userId := interaction.Member.User.ID
-
-	channelId := discord.CreatePrivateChannel(discord.PrivateChannelData{
-		ChannelName:   "bug-report",
-		CategoryID:    config.BugReportCategoryID(),
-		CreatorUserID: userId,
-		Topic:         "Bug report channel",
-	})
-
-	modalValues := getComponentValues(interaction.ModalSubmitData().Components)
-	var reportData ModalData
-	for key, value := range modalValues {
-		switch key {
-		case "bug_report_reason":
-			reportData.Body = value
-		case "bug_report_title":
-			reportData.Title = value
-		}
-	}
-
-	sendMessageToChannel(TicketData{
-		Title:     reportData.Title,
-		Body:      reportData.Body,
-		ChannelId: channelId,
-		UserId:    userId,
-	}, interaction)
+// TicketData holds data for sending messages to channels
+type TicketData struct {
+	Title     string
+	Body      string
+	ChannelId string
+	UserId    string
 }

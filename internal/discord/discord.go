@@ -27,13 +27,14 @@ func SearchVoiceChannelByUserID(userID string) (voiceChannelID string) {
 }
 
 // SendChannelMessage sends a channel message to channel with channel id equal to m.ChannelID.
-func SendChannelMessage(channelID string, message string) *discordgo.Message {
+func SendChannelMessage(channelID string, message string) (*discordgo.Message, error) {
 	openingMessage, err := Session.ChannelMessageSend(channelID, message)
 	if err != nil {
 		slog.Warn("failed to send message to channel", "channelId", channelID, "message", message, "error", err)
+		return nil, err
 	}
 
-	return openingMessage
+	return openingMessage, nil
 }
 
 func SendChannelMessageSendComplex(channelID string, data *discordgo.MessageSend) {
