@@ -31,12 +31,12 @@ func CreatePrivateChannel(data PrivateChannelData) (string, error) {
 		},
 	}
 
-	for _, roleID := range config.GetManagerRoleIDs() {
+	/* for _, roleID := range config.GetManagerRoleIDs() {
 		permissionOverwrites = append(permissionOverwrites, &discordgo.PermissionOverwrite{
 			ID:    roleID,
 			Allow: discordgo.PermissionViewChannel,
 		})
-	}
+	} */
 
 	channelData := discordgo.GuildChannelCreateData{
 		Name:                 data.ChannelName,

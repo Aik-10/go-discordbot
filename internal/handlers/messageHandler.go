@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 
+	"github.com/Aik-10/go-discordbot/internal/config"
 	"github.com/Aik-10/go-discordbot/internal/discord"
 	"github.com/bwmarrin/discordgo"
 )
@@ -13,8 +14,49 @@ func MessageInteractionHandler(CustomID string, interaction *discordgo.Interacti
 		ButtonInteractHandleTicket(interaction)
 	case "open_bug":
 		ButtonInteractHandleBug(interaction)
+	case "close_channel":
+		CloseChannelButton(interaction)
 	default:
-		slog.Error("Unknown interaction type")
+		slog.Error("Unknown interaction type", "CustomID", CustomID)
+	}
+}
+
+func getParentCategoryByChannelID(channelID string) (*discordgo.Channel, error) {
+	channel, err := discord.Session.Channel(channelID)
+	if err != nil {
+		slog.Error("Failed to get channel", "error", err)
+		return nil, err
+	}
+
+	if channel.ParentID != "" {
+		parentCategory, err := discord.Session.Channel(channel.ParentID)
+		if err != nil {
+			slog.Error("Failed to get parent category", "error", err)
+			return nil, err
+		}
+
+		return parentCategory, nil
+	}
+
+	return nil, nil
+}
+
+func CloseChannelButton(interaction *discordgo.InteractionCreate) {
+	category, err := getParentCategoryByChannelID(interaction.ChannelID)
+	if category == nil || err != nil {
+		slog.Error("Failed to get parent category")
+		return
+	}
+
+	switch category.ID {
+	case config.TicketCategory():
+		HandleChannelArchive(interaction.ChannelID, config.TicketArchiveChannel())
+		HandleChannelDeletion(interaction.ChannelID)
+	case config.BugReportCategoryID():
+		HandleChannelArchive(interaction.ChannelID, config.BugArchiveChannel())
+		HandleChannelDeletion(interaction.ChannelID)
+	default:
+		slog.Error("Unknown category", "category", category.ID)
 	}
 }
 

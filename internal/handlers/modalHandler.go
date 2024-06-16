@@ -71,6 +71,9 @@ func handleInteraction(interaction *discordgo.InteractionCreate, channelName, ca
 		ChannelId: channelId,
 		UserId:    userId,
 	}, interaction)
+
+	closeButton := discord.CloseChannelButton("close_channel", "Close Channel")
+	discord.SendChannelMessageSendComplex(channelId, closeButton)
 }
 
 func sendMessageToChannel(data TicketData, interaction *discordgo.InteractionCreate) {

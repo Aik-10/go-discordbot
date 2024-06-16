@@ -50,3 +50,21 @@ func CreateInputModal(data ModalData) *discordgo.InteractionResponse {
 
 	return modal
 }
+
+func CloseChannelButton(CustomID string, Label string) *discordgo.MessageSend {
+	component := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				&discordgo.Button{
+					Label:    Label,
+					Style:    discordgo.DangerButton,
+					CustomID: CustomID,
+				},
+			},
+		},
+	}
+
+	return &discordgo.MessageSend{
+		Components: component,
+	}
+}
