@@ -3,7 +3,7 @@ module github.com/Aik-10/go-discordbot
 go 1.21.5
 
 require (
-	github.com/bwmarrin/discordgo v0.28.1
+	github.com/bwmarrin/discordgo v0.29.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/joho/godotenv v1.5.1
 )
